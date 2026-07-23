@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Portale Didattico</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header: Intestazione e Navigazione -->
+    <header>
+        <h1>Portale Didattico - Area Riservata</h1>
+        <p id="welcomeUser">Benvenuto! Seleziona la materia per visualizzare le lezioni e le domande dedicate.</p>
+        <button type="button" id="logoutBtn" style="float: right; margin-top: -40px;">Logout</button>
+        <hr>
+    </header>
+
+    <!-- Sezione 1: Filtro Materia -->
+    <section>
+        <h2>Selezione Materiale Didattico</h2>
+        <form id="filterForm">
+            <!-- Selezione della materia (Popolata dinamicamente dal Cloud) -->
+            <label for="materia">Scegli la Materia:</label>
+            <select id="materia">
+                <option value="">Caricamento corsi in corso...</option>
+            </select>
+
+            <br><br>
+
+            <button type="button" id="loadContentBtn">Mostra Contenuto</button>
+        </form>
+    </section>
+
+    <hr>
+
+    <!-- Sezione 2: Area Video Lezione -->
+    <section>
+        <h2 id="materiaTitle">Seleziona un corso</h2>
+        <p id="videoDescription">Guarda la lezione per comprendere i concetti chiave di questa materia:</p>
+        
+        <!-- Video Player -->
+        <video id="courseVideo" controls width="600">
+            <source id="videoSource" src="" type="video/mp4">
+            Il tuo browser non supporta il tag video.
+        </video>
+    </section>
+
+    <hr>
+
+    <!-- Sezione 3: Tabella Esercizi e Domande -->
+    <section>
+        <h2>Banca Dati Domande ed Esercizi</h2>
+        <table border="1" cellpadding="8" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Domanda / Argomento</th>
+                    <th>Livello</th>
+                    <th>Azione</th>
+                </tr>
+            </thead>
+            <tbody id="questionsTableBody">
+                <tr>
+                    <td>1</td>
+                    <td>Introduzione e concetti base del corso</td>
+                    <td>Base</td>
+                    <td><a href="#" onclick="alert('Contenuto disponibile!'); return false;">Vedi Risposta</a></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Esercitazione pratica guidata</td>
+                    <td>Intermedio</td>
+                    <td><a href="#" onclick="alert('Contenuto disponibile!'); return false;">Scarica PDF</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <hr>
+
+    <!-- Footer: Link di contatto e Logout -->
+    <footer>
+        <p>Supporto Studenti: <a href="mailto:mario.auob@rizzoli.it">mario.auob@rizzoli.it</a></p>
+    </footer>
+
+    <!-- 1. استدعاء مكتبة Supabase السحابية -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- 2. كود الاتصال بالسحابة وعرض البيانات -->
+    <script>
+        const SUPABASE_URL = 'https://uqgprffqfrwxdymfwhvn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 🛡️ 1. حارس الأمان: التأكد من تسجيل دخول الطالب أولاً
+        const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
+        if (!currentUser) {
+            alert("Devi prima effettuare il login!");
+            window.location.href = "login.html";
+        } else {
+            document.getElementById('welcomeUser').textContent = "Benvenuto, " + currentUser.username + "! Seleziona la materia per visualizzare le lezioni.";
+        }
+
+        // عناصر DOM
+        const materiaSelect = document.getElementById('materia');
+        const loadBtn = document.getElementById('loadContentBtn');
+        const materiaTitle = document.getElementById('materiaTitle');
+        const courseVideo = document.getElementById('courseVideo');
+        const videoSource = document.getElementById('videoSource');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        let allCourses = []; // تخزين المواد المجلوبة من السحابة
+
+        // ☁️ 2. جلب قائمة المواد المتاحة من جدول courses في Supabase
+        async function fetchCoursesFromCloud() {
+            const { data: courses, error } = await _supabase
+                .from('courses')
+                .select('*');
+
+            if (error) {
+                console.error("Errore caricamento corsi:", error);
+                materiaSelect.innerHTML = '<option value="">Errore nel caricamento</option>';
+                return;
+            }
+
+            allCourses = courses;
+            materiaSelect.innerHTML = ""; // تفريغ الخيارات القديمة
+
+            if (courses.length === 0) {
+                materiaSelect.innerHTML = '<option value="">Nessun corso disponibile</option>';
+                return;
+            }
+
+            // تعبئة القائمة بالدورات الموجودة في السحابة
+            courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.code;
+                option.textContent = `${course.title} (${course.code})`;
+                materiaSelect.appendChild(option);
+            });
+
+            // عرض المادة الأولى تلقائياً
+            showCourseData(courses[0]);
+        }
+
+        // 📺 3. عرض المادة المحددة في مشغل الفيديو والعنوان
+        function showCourseData(course) {
+            if (!course) return;
+            materiaTitle.textContent = course.title;
+            videoSource.src = course.video_url;
+            courseVideo.load(); // إعادة تحميل مشغل الفيديو بالرابط الجديد
+        }
+
+        // عند الضغط على زر "Mostra Contenuto"
+        loadBtn.addEventListener('click', function() {
+            const selectedCode = materiaSelect.value;
+            const selectedCourse = allCourses.find(c => c.code === selectedCode);
+            if (selectedCourse) {
+                showCourseData(selectedCourse);
+            }
+        });
+
+        // 🚪 4. زر تسجيل الخروج
+        logoutBtn.addEventListener('click', function() {
+            localStorage.removeItem('loggedInUser');
+            window.location.href = "login.html";
+        });
+
+        // تشغيل جلب البيانات عند فتح الصفحة مباشرة
+        fetchCoursesFromCloud();
+    </script>
+</body>
+</html>

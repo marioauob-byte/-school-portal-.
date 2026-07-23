@@ -1,0 +1,94 @@
+/* إعدادات الخطوط والخلفية العامة */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* تنسيق العناوين */
+h1 {
+    color: #0056b3;
+    margin-bottom: 5px;
+}
+
+h3, h4 {
+    color: #2c3e50;
+}
+
+/* بطاقة المحتوى العامة (Card Style) */
+form, section, table {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    max-width: 500px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* تنسيق حقول الإدخال والقوائم */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+textarea,
+select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+/* تنسيق الأزرار */
+button {
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #003d80;
+}
+
+/* تنسيق الجدول */
+table {
+    max-width: 800px;
+    border-collapse: collapse;
+}
+
+th {
+    background-color: #0056b3;
+    color: white;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+/* تنسيق الفيديوهات */
+video {
+    max-width: 100%;
+    border-radius: 8px;
+}
+/* ألوان أزرار لوحة التحكم الخاصة */
+.btn-delete { background-color: #d9534f !important; }
+.btn-delete:hover { background-color: #c9302c !important; }
+
+.btn-add { background-color: #5cb85c !important; }
+.btn-add:hover { background-color: #4cae4c !important; }

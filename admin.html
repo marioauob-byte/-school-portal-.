@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Pannello Amministratore - Controllo Totale (Cloud)</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-section { background: #f9f9f9; padding: 15px; margin-bottom: 25px; border-radius: 8px; border: 1px solid #ddd; }
+        .btn-delete { background-color: #d9534f; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .btn-edit { background-color: #f0ad4e; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; margin-right: 5px; }
+        .btn-add { background-color: #5cb85c; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Pannello di Controllo Amministratore (Cloud)</h1>
+        <p>Gestione completa di Studenti, Scadenze e Materie sincronizzate sul Cloud.</p>
+        <hr>
+    </header>
+
+    <!-- ==================== PARTE 1: GESTIONE STUDENTI ==================== -->
+    <section class="admin-section">
+        <h2>1. Aggiungi / Gestisci Studenti (Cloud)</h2>
+        <form id="addUserForm">
+            <div>
+                <label for="newUsername">Nome Utente Studente:</label><br>
+                <input type="text" id="newUsername" placeholder="Es. mario2026" required>
+            </div>
+            <br>
+            <div>
+                <label for="newPassword">Password:</label><br>
+                <input type="password" id="newPassword" placeholder="Password per lo studente" required>
+            </div>
+            <br>
+            <div>
+                <label for="expiryDate">Data Scadenza Abbonamento:</label><br>
+                <input type="date" id="expiryDate" required>
+            </div>
+            <br>
+            <button type="button" id="addUserBtn" class="btn-add">Crea Account Studente</button>
+        </form>
+
+        <br>
+        <h3>Studenti Registrati nel Cloud</h3>
+        <table border="1" cellpadding="8" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Nome Utente</th>
+                    <th>Password</th>
+                    <th>Data Scadenza</th>
+                    <th>Stato</th>
+                    <th>Azione</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- Popolato da JS Cloud -->
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ==================== PARTE 2: GESTIONE MATERIE E VIDEO ==================== -->
+    <section class="admin-section">
+        <h2 id="formTitle">2. Aggiungi Materia e Video (Cloud)</h2>
+        <form id="courseForm">
+            <div>
+                <label for="courseKey">Codice Materia (es: python, reti):</label><br>
+                <input type="text" id="courseKey" placeholder="Es. python" required>
+            </div>
+            <br>
+            <div>
+                <label for="courseTitle">Nome della Materia:</label><br>
+                <input type="text" id="courseTitle" placeholder="Es. Programmazione Python" required>
+            </div>
+            <br>
+            <div>
+                <label for="videoUrl">Link Video MP4 / URL:</label><br>
+                <input type="text" id="videoUrl" placeholder="https://www.w3schools.com/html/mov_bbb.mp4" required>
+            </div>
+            <br>
+            <button type="button" id="saveCourseBtn" class="btn-add">Salva Materia sul Cloud</button>
+        </form>
+
+        <br>
+        <h3>Materie Esistenti nel Cloud</h3>
+        <table border="1" cellpadding="8" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Codice</th>
+                    <th>Nome Materia</th>
+                    <th>Link Video</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody id="coursesTableBody">
+                <!-- Popolato da JS Cloud -->
+            </tbody>
+        </table>
+    </section>
+
+    <hr>
+
+    <footer>
+        <p><a href="login.html">Torna alla Login</a> | <a href="dashboard.html">Vai alla Dashboard</a></p>
+    </footer>
+
+    <!-- ☁️ 1. المكتبة الرسمية لـ Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- ☁️ 2. كود إدارة السحابة (الطلاب والمواد) -->
+    <script>
+        const SUPABASE_URL = 'https://uqgprffqfrwxdymfwhvn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        /* ==================== LOGICA STUDENTI (CLOUD) ==================== */
+        const addUserBtn = document.getElementById('addUserBtn');
+        const newUsernameInput = document.getElementById('newUsername');
+        const newPasswordInput = document.getElementById('newPassword');
+        const expiryDateInput = document.getElementById('expiryDate');
+        const usersTableBody = document.getElementById('usersTableBody');
+
+        // 1. إضافة طالب جديد إلى السحابة
+        addUserBtn.addEventListener('click', async function() {
+            const username = newUsernameInput.value.trim();
+            const password = newPasswordInput.value.trim();
+            const expiry = expiryDateInput.value;
+
+            if (!username || !password || !expiry) {
+                alert("Compila tutti i campi dello studente!");
+                return;
+            }
+
+            const { error } = await _supabase
+                .from('students')
+                .insert([{ username: username, password: password, expiry_date: expiry }]);
+
+            if (error) {
+                alert("Errore durante il salvataggio: " + error.message);
+            } else {
+                alert("Studente salvato sul Cloud con successo!");
+                newUsernameInput.value = "";
+                newPasswordInput.value = "";
+                expiryDateInput.value = "";
+                loadStudentsCloud();
+            }
+        });
+
+        // 2. جلب وتحديث قائمة الطلاب من السحابة
+        async function loadStudentsCloud() {
+            const { data: students, error } = await _supabase.from('students').select('*');
+            
+            if (error) {
+                console.error("Errore caricamento studenti:", error);
+                return;
+            }
+
+            usersTableBody.innerHTML = "";
+            const today = new Date().toISOString().split('T')[0];
+
+            students.forEach(s => {
+                const isExpired = s.expiry_date < today;
+                const statusText = isExpired ? "<span style='color:red;'>Scaduto</span>" : "<span style='color:green;'>Attivo</span>";
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${s.username}</strong></td>
+                    <td>${s.password}</td>
+                    <td>${s.expiry_date}</td>
+                    <td>${statusText}</td>
+                    <td><button class="btn-delete" onclick="deleteStudentCloud(${s.id})">Elimina</button></td>
+                `;
+                usersTableBody.appendChild(row);
+            });
+        }
+
+        // 3. حذف طالب من السحابة
+        async function deleteStudentCloud(id) {
+            if (confirm("Sei sicuro di voler eliminare questo studente dal Cloud?")) {
+                const { error } = await _supabase.from('students').delete().eq('id', id);
+                if (error) {
+                    alert("Errore eliminazione: " + error.message);
+                } else {
+                    loadStudentsCloud();
+                }
+            }
+        }
+
+
+        /* ==================== LOGICA MATERIE (CLOUD) ==================== */
+        const saveCourseBtn = document.getElementById('saveCourseBtn');
+        const courseKeyInput = document.getElementById('courseKey');
+        const courseTitleInput = document.getElementById('courseTitle');
+        const videoUrlInput = document.getElementById('videoUrl');
+        const coursesTableBody = document.getElementById('coursesTableBody');
+
+        // 1. إضافة مادة جديدة للسحابة
+        saveCourseBtn.addEventListener('click', async function() {
+            const code = courseKeyInput.value.trim().toLowerCase();
+            const title = courseTitleInput.value.trim();
+            const video_url = videoUrlInput.value.trim();
+
+            if (!code || !title || !video_url) {
+                alert("Compila tutti i campi della materia!");
+                return;
+            }
+
+            const { error } = await _supabase
+                .from('courses')
+                .upsert([{ code: code, title: title, video_url: video_url }]);
+
+            if (error) {
+                alert("Errore salvataggio materia: " + error.message);
+            } else {
+                alert("Materia salvata sul Cloud!");
+                courseKeyInput.value = "";
+                courseTitleInput.value = "";
+                videoUrlInput.value = "";
+                loadCoursesCloud();
+            }
+        });
+
+        // 2. جلب قائمة المواد من السحابة
+        async function loadCoursesCloud() {
+            const { data: courses, error } = await _supabase.from('courses').select('*');
+            if (error) return;
+
+            coursesTableBody.innerHTML = "";
+
+            if (!courses || courses.length === 0) {
+                coursesTableBody.innerHTML = "<tr><td colspan='4'>Nessuna materia presente.</td></tr>";
+                return;
+            }
+
+            courses.forEach(c => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${c.code}</strong></td>
+                    <td>${c.title}</td>
+                    <td><small>${c.video_url}</small></td>
+                    <td><button class="btn-delete" onclick="deleteCourseCloud('${c.code}')">Elimina</button></td>
+                `;
+                coursesTableBody.appendChild(row);
+            });
+        }
+
+        // 3. حذف مادة من السحابة
+        async function deleteCourseCloud(code) {
+            if (confirm("Vuoi eliminare questa materia dal Cloud?")) {
+                await _supabase.from('courses').delete().eq('code', code);
+                loadCoursesCloud();
+            }
+        }
+
+        // تشغيل التحميل الأولي للبيانات عند فتح الصفحة
+        loadStudentsCloud();
+        loadCoursesCloud();
+    </script>
+</body>
+</html>
