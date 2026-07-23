@@ -83,7 +83,7 @@
         <p>Supporto Studenti: <a href="mailto:mario.auob@rizzoli.it">mario.auob@rizzoli.it</a></p>
     </footer>
 
-    <!-- 1. استدعاء مكتبة Supabase السحابية -->
+    <!-- 1. استدعاء مكتبة Supabase הסحابية -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- 2. كود الاتصال بالسحابة وعرض البيانات -->
@@ -92,11 +92,11 @@
         const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 🛡️ 1. حارس الأمان: التأكد من تسجيل دخول الطالب أولاً
+        // 🛡️ 1. حارس الأمان: التأكد من تسجيل دخول الطالب أولاً (تم تعديل التوجيه إلى index.html)
         const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
         if (!currentUser) {
             alert("Devi prima effettuare il login!");
-            window.location.href = "login.html";
+            window.location.href = "index.html"; // FIX: login.html -> index.html
         } else {
             document.getElementById('welcomeUser').textContent = "Benvenuto, " + currentUser.username + "! Seleziona la materia per visualizzare le lezioni.";
         }
@@ -123,47 +123,51 @@
                 return;
             }
 
-            allCourses = courses;
+            allCourses = courses || [];
             materiaSelect.innerHTML = ""; // تفريغ الخيارات القديمة
 
-            if (courses.length === 0) {
+            if (allCourses.length === 0) {
                 materiaSelect.innerHTML = '<option value="">Nessun corso disponibile</option>';
                 return;
             }
 
             // تعبئة القائمة بالدورات الموجودة في السحابة
-            courses.forEach(course => {
+            allCourses.forEach(course => {
                 const option = document.createElement('option');
-                option.value = course.code;
-                option.textContent = `${course.title} (${course.code})`;
+                option.value = course.id || course.code;
+                const titleText = course.title || course.code || "Corso";
+                const codeText = course.code ? ` (${course.code})` : "";
+                option.textContent = titleText + codeText;
                 materiaSelect.appendChild(option);
             });
 
             // عرض المادة الأولى تلقائياً
-            showCourseData(courses[0]);
+            showCourseData(allCourses[0]);
         }
 
         // 📺 3. عرض المادة المحددة في مشغل الفيديو والعنوان
         function showCourseData(course) {
             if (!course) return;
-            materiaTitle.textContent = course.title;
-            videoSource.src = course.video_url;
-            courseVideo.load(); // إعادة تحميل مشغل الفيديو بالرابط الجديد
+            materiaTitle.textContent = course.title || course.code || "Materia";
+            if (course.video_url) {
+                videoSource.src = course.video_url;
+                courseVideo.load();
+            }
         }
 
         // عند الضغط على زر "Mostra Contenuto"
         loadBtn.addEventListener('click', function() {
-            const selectedCode = materiaSelect.value;
-            const selectedCourse = allCourses.find(c => c.code === selectedCode);
+            const selectedVal = materiaSelect.value;
+            const selectedCourse = allCourses.find(c => (c.id == selectedVal || c.code === selectedVal));
             if (selectedCourse) {
                 showCourseData(selectedCourse);
             }
         });
 
-        // 🚪 4. زر تسجيل الخروج
+        // 🚪 4. زر تسجيل الخروج (تم تعديل التوجيه إلى index.html)
         logoutBtn.addEventListener('click', function() {
             localStorage.removeItem('loggedInUser');
-            window.location.href = "login.html";
+            window.location.href = "index.html"; // FIX: login.html -> index.html
         });
 
         // تشغيل جلب البيانات عند فتح الصفحة مباشرة
