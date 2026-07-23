@@ -2,176 +2,142 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - Portale Didattico</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portale Didattico - Area Riservata</title>
+    <!-- Tailwind CSS per un design moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="bg-slate-900 text-white min-h-screen">
 
-    <!-- Header: Intestazione e Navigazione -->
-    <header>
-        <h1>Portale Didattico - Area Riservata</h1>
-        <p id="welcomeUser">Benvenuto! Seleziona la materia per visualizzare le lezioni e le domande dedicate.</p>
-        <button type="button" id="logoutBtn" style="float: right; margin-top: -40px;">Logout</button>
-        <hr>
-    </header>
+    <!-- Header Navigation -->
+    <nav class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg"><i class="fa-solid fa-server text-xl"></i></div>
+            <h1 class="text-xl font-bold tracking-wide">Portale Didattico IT</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="welcomeUser" class="text-sm text-slate-300 font-medium"></span>
+            <button type="button" id="logoutBtn" class="bg-red-600/80 hover:bg-red-600 text-xs px-3.5 py-2 rounded-lg transition font-semibold">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+            </button>
+        </div>
+    </nav>
 
-    <!-- Sezione 1: Filtro Materia -->
-    <section>
-        <h2>Selezione Materiale Didattico</h2>
-        <form id="filterForm">
-            <!-- Selezione della materia (Popolata dinamicamente dal Cloud) -->
-            <label for="materia">Scegli la Materia:</label>
-            <select id="materia">
-                <option value="">Caricamento corsi in corso...</option>
-            </select>
-
-            <br><br>
-
-            <button type="button" id="loadContentBtn">Mostra Contenuto</button>
-        </form>
-    </section>
-
-    <hr>
-
-    <!-- Sezione 2: Area Video Lezione -->
-    <section>
-        <h2 id="materiaTitle">Seleziona un corso</h2>
-        <p id="videoDescription">Guarda la lezione per comprendere i concetti chiave di questa materia:</p>
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
         
-        <!-- Video Player -->
-        <video id="courseVideo" controls width="600">
-            <source id="videoSource" src="" type="video/mp4">
-            Il tuo browser non supporta il tag video.
-        </video>
-    </section>
+        <!-- Welcome Hero Section -->
+        <div class="mb-10 bg-gradient-to-r from-indigo-900/40 to-slate-800/40 border border-slate-800 p-8 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <h2 class="text-3xl font-extrabold mb-2">Piattaforma Didattica IT</h2>
+                <p class="text-slate-400 max-w-xl">Esplora i 16 moduli tecnici, consulta i materiali ed esegui i test di verifica delle tue competenze.</p>
+            </div>
+            <div class="flex gap-3">
+                <div class="bg-slate-800/80 border border-slate-700 px-5 py-3 rounded-xl text-center">
+                    <span id="modulesCount" class="block text-2xl font-bold text-indigo-400">16</span>
+                    <span class="text-xs text-slate-400">Moduli Totali</span>
+                </div>
+                <div class="bg-slate-800/80 border border-slate-700 px-5 py-3 rounded-xl text-center">
+                    <span class="block text-2xl font-bold text-emerald-400">Online</span>
+                    <span class="text-xs text-slate-400">Stato Sistema</span>
+                </div>
+            </div>
+        </div>
 
-    <hr>
+        <!-- Section Title -->
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-folder-tree text-indigo-400"></i> Moduli Didattici
+            </h3>
+        </div>
 
-    <!-- Sezione 3: Tabella Esercizi e Domande -->
-    <section>
-        <h2>Banca Dati Domande ed Esercizi</h2>
-        <table border="1" cellpadding="8" cellspacing="0">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Domanda / Argomento</th>
-                    <th>Livello</th>
-                    <th>Azione</th>
-                </tr>
-            </thead>
-            <tbody id="questionsTableBody">
-                <tr>
-                    <td>1</td>
-                    <td>Introduzione e concetti base del corso</td>
-                    <td>Base</td>
-                    <td><a href="#" onclick="alert('Contenuto disponibile!'); return false;">Vedi Risposta</a></td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Esercitazione pratica guidata</td>
-                    <td>Intermedio</td>
-                    <td><a href="#" onclick="alert('Contenuto disponibile!'); return false;">Scarica PDF</a></td>
-                </tr>
-            </tbody>
-        </table>
-    </section>
+        <!-- Modules Grid Container -->
+        <div id="modulesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Loading Skeletons -->
+            <div class="animate-pulse bg-slate-800/50 border border-slate-800 h-44 rounded-xl"></div>
+            <div class="animate-pulse bg-slate-800/50 border border-slate-800 h-44 rounded-xl"></div>
+            <div class="animate-pulse bg-slate-800/50 border border-slate-800 h-44 rounded-xl"></div>
+        </div>
 
-    <hr>
+    </main>
 
-    <!-- Footer: Link di contatto e Logout -->
-    <footer>
-        <p>Supporto Studenti: <a href="mailto:mario.auob@rizzoli.it">mario.auob@rizzoli.it</a></p>
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 mt-16 py-6 text-center text-sm text-slate-500">
+        <p>Supporto Studenti: <a href="mailto:mario.auob@rizzoli.it" class="text-indigo-400 hover:underline">mario.auob@rizzoli.it</a></p>
     </footer>
 
-    <!-- 1. استدعاء مكتبة Supabase הסحابية -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- 2. كود الاتصال بالسحابة وعرض البيانات -->
+    <!-- Script JavaScript -->
     <script>
+        // 1. المفاتيح الخاصة بـ Supabase
         const SUPABASE_URL = 'https://uqgprffqfrwxdymfwhvn.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 🛡️ 1. حارس الأمان: التأكد من تسجيل دخول الطالب أولاً (تم تعديل التوجيه إلى index.html)
+        // 🛡️ 2. حارس الأمان (نفس كودك الأصلي للتحقق من التسجيل)
         const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
         if (!currentUser) {
             alert("Devi prima effettuare il login!");
-            window.location.href = "index.html"; // FIX: login.html -> index.html
+            window.location.href = "index.html";
         } else {
-            document.getElementById('welcomeUser').textContent = "Benvenuto, " + currentUser.username + "! Seleziona la materia per visualizzare le lezioni.";
+            document.getElementById('welcomeUser').textContent = "Ciao, " + currentUser.username;
         }
 
-        // عناصر DOM
-        const materiaSelect = document.getElementById('materia');
-        const loadBtn = document.getElementById('loadContentBtn');
-        const materiaTitle = document.getElementById('materiaTitle');
-        const courseVideo = document.getElementById('courseVideo');
-        const videoSource = document.getElementById('videoSource');
-        const logoutBtn = document.getElementById('logoutBtn');
+        // 🚪 3. زر تسجيل الخروج
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('loggedInUser');
+            window.location.href = "index.html";
+        });
 
-        let allCourses = []; // تخزين المواد المجلوبة من السحابة
-
-        // ☁️ 2. جلب قائمة المواد المتاحة من جدول courses في Supabase
-        async function fetchCoursesFromCloud() {
-            const { data: courses, error } = await _supabase
-                .from('courses')
-                .select('*');
+        // ☁️ 4. جلب الموديولات الـ 16 من جدول modules
+        async function fetchModulesFromCloud() {
+            const grid = document.getElementById('modulesGrid');
+            const { data: modules, error } = await _supabase
+                .from('modules')
+                .select('*')
+                .order('id', { ascending: true });
 
             if (error) {
-                console.error("Errore caricamento corsi:", error);
-                materiaSelect.innerHTML = '<option value="">Errore nel caricamento</option>';
+                console.error("Errore caricamento moduli:", error);
+                grid.innerHTML = `<p class="text-red-400 col-span-3 text-center py-10">Errore nel caricamento dei dati.</p>`;
                 return;
             }
 
-            allCourses = courses || [];
-            materiaSelect.innerHTML = ""; // تفريغ الخيارات القديمة
-
-            if (allCourses.length === 0) {
-                materiaSelect.innerHTML = '<option value="">Nessun corso disponibile</option>';
+            if (!modules || modules.length === 0) {
+                grid.innerHTML = `<p class="text-slate-400 col-span-3 text-center py-10">Nessun modulo trovato.</p>`;
                 return;
             }
 
-            // تعبئة القائمة بالدورات الموجودة في السحابة
-            allCourses.forEach(course => {
-                const option = document.createElement('option');
-                option.value = course.id || course.code;
-                const titleText = course.title || course.code || "Corso";
-                const codeText = course.code ? ` (${course.code})` : "";
-                option.textContent = titleText + codeText;
-                materiaSelect.appendChild(option);
-            });
+            document.getElementById('modulesCount').innerText = modules.length;
 
-            // عرض المادة الأولى تلقائياً
-            showCourseData(allCourses[0]);
+            // عرض الموديولات ككروت تفاعلية جميله مع ربطها بصفحة التفاصيل
+            grid.innerHTML = modules.map(mod => `
+                <div class="bg-slate-800/60 border border-slate-700/60 hover:border-indigo-500/50 p-6 rounded-xl transition duration-300 hover:-translate-y-1 group flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-indigo-950 text-indigo-400 p-3 rounded-lg border border-indigo-800/50 group-hover:bg-indigo-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-folder-open text-xl"></i>
+                            </div>
+                            <span class="text-xs bg-slate-700 text-slate-300 px-2.5 py-1 rounded-full font-mono">Modulo ${mod.id}</span>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2 group-hover:text-indigo-300 transition">${mod.title}</h4>
+                        <p class="text-slate-400 text-sm line-clamp-2 mb-4">${mod.description || 'Contenuto tecnico e risorse di laboratorio.'}</p>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-slate-700/50 text-xs text-slate-400">
+                        <span><i class="fa-solid fa-file-pdf mr-1 text-red-400"></i> Materiale disponibile</span>
+                        <a href="module-details.html?id=${mod.id}" class="text-indigo-400 font-semibold group-hover:translate-x-1 transition flex items-center gap-1">
+                            Esplora <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // 📺 3. عرض المادة المحددة في مشغل الفيديو والعنوان
-        function showCourseData(course) {
-            if (!course) return;
-            materiaTitle.textContent = course.title || course.code || "Materia";
-            if (course.video_url) {
-                videoSource.src = course.video_url;
-                courseVideo.load();
-            }
-        }
-
-        // عند الضغط على زر "Mostra Contenuto"
-        loadBtn.addEventListener('click', function() {
-            const selectedVal = materiaSelect.value;
-            const selectedCourse = allCourses.find(c => (c.id == selectedVal || c.code === selectedVal));
-            if (selectedCourse) {
-                showCourseData(selectedCourse);
-            }
-        });
-
-        // 🚪 4. زر تسجيل الخروج (تم تعديل التوجيه إلى index.html)
-        logoutBtn.addEventListener('click', function() {
-            localStorage.removeItem('loggedInUser');
-            window.location.href = "index.html"; // FIX: login.html -> index.html
-        });
-
-        // تشغيل جلب البيانات عند فتح الصفحة مباشرة
-        fetchCoursesFromCloud();
+        // تشغيل الجلب
+        fetchModulesFromCloud();
     </script>
 </body>
 </html>

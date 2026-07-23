@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dettaglio Modulo - Portale Didattico</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+
+    <!-- Header Navigation -->
+    <nav class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg transition">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h1 class="text-xl font-bold tracking-wide">Dettaglio Modulo</h1>
+        </div>
+        <div>
+            <span id="welcomeUser" class="text-sm text-slate-400"></span>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto px-6 py-8">
+        
+        <!-- Module Header Card -->
+        <div id="moduleCard" class="bg-slate-800/80 border border-slate-700 p-8 rounded-2xl mb-8">
+            <div class="flex items-center gap-3 text-indigo-400 text-sm font-mono mb-2">
+                <i class="fa-solid fa-folder-open"></i>
+                <span id="modBadge">Modulo --</span>
+            </div>
+            <h2 id="modTitle" class="text-3xl font-extrabold text-white mb-4">Caricamento in corso...</h2>
+            <p id="modDescription" class="text-slate-300 text-lg leading-relaxed">Si prega di attendere il recupero delle informazioni dal sistema.</p>
+        </div>
+
+        <!-- Materiali e Quiz Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Box Materiale Didattico -->
+            <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl flex flex-col justify-between">
+                <div>
+                    <div class="text-red-400 text-2xl mb-3"><i class="fa-solid fa-file-pdf"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-2">Materiali di Studio</h3>
+                    <p class="text-slate-400 text-sm mb-6">Consulta le slide, la documentazione ufficiale e gli appunti di laboratorio per questo modulo.</p>
+                </div>
+                <button onclick="alert('Download in corso... (Funzionalità dimostrativa)')" class="bg-slate-700 hover:bg-slate-600 text-white w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Scarica Materiale PDF
+                </button>
+            </div>
+
+            <!-- Box Quiz di Verifica -->
+            <div class="bg-slate-800/50 border border-indigo-500/30 p-6 rounded-xl flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-indigo-600 text-white text-xs px-3 py-1 rounded-bl-lg font-semibold">Test Tattico</div>
+                <div>
+                    <div class="text-indigo-400 text-2xl mb-3"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-2">Quiz di Verifica</h3>
+                    <p class="text-slate-400 text-sm mb-6">Metti alla prova le tue conoscenze con le domande a risposta multipla dedicate a questo argomento.</p>
+                </div>
+                <!-- تم تحديث هذا الزر للانتقال المباشر لصفحة الاختبار -->
+                <button onclick="window.location.href='quiz.html?id=' + moduleId" class="bg-indigo-600 hover:bg-indigo-500 text-white w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> Avvia il Quiz
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://uqgprffqfrwxdymfwhvn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Check Login
+        const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
+        if (!currentUser) {
+            window.location.href = "index.html";
+        } else {
+            document.getElementById('welcomeUser').textContent = "Studente: " + currentUser.username;
+        }
+
+        // Get Module ID from URL (?id=1)
+        const urlParams = new URLSearchParams(window.location.search);
+        const moduleId = urlParams.get('id');
+
+        async function fetchModuleDetails() {
+            if (!moduleId) {
+                document.getElementById('modTitle').textContent = "Modulo non specificato";
+                return;
+            }
+
+            const { data, error } = await _supabase
+                .from('modules')
+                .select('*')
+                .eq('id', moduleId)
+                .single();
+
+            if (error || !data) {
+                console.error("Errore recupero modulo:", error);
+                document.getElementById('modTitle').textContent = "Errore nel caricamento del modulo";
+                return;
+            }
+
+            document.getElementById('modBadge').textContent = "Modulo " + data.id;
+            document.getElementById('modTitle').textContent = data.title;
+            document.getElementById('modDescription').textContent = data.description || "Nessuna descrizione fornita.";
+        }
+
+        fetchModuleDetails();
+    </script>
+</body>
+</html>
