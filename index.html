@@ -131,13 +131,13 @@
             }
         });
 
-        // Request Form System (حفظ الطلب مباشرة في Supabase)
+        // Request Form System (تم تعديل اسم الحقل ليصبح city)
         const sendReqBtn = document.getElementById('sendReqBtn');
         
         sendReqBtn.addEventListener('click', async function() {
             const fullName = document.getElementById('fullName').value.trim();
             const email = document.getElementById('reqEmail').value.trim();
-            const location = document.getElementById('location').value.trim();
+            const locationVal = document.getElementById('location').value.trim();
             const reason = document.getElementById('reason').value.trim();
 
             if (!fullName || !email) {
@@ -145,21 +145,21 @@
                 return;
             }
 
-            // إرسال البيانات لجداول Supabase
+            // إرسال البيانات لجداول Supabase مع مطابقة اسم العمود city
             const { data, error } = await _supabase
                 .from('access_requests')
                 .insert([
                     { 
                         full_name: fullName, 
                         email: email, 
-                        location: location, 
+                        city: locationVal, 
                         reason: reason 
                     }
                 ]);
 
             if (error) {
                 console.error("Errore invio richiesta:", error);
-                alert("Errore nell'invio della richiesta. Riprova!");
+                alert("Errore nell'invio della richiesta: " + error.message);
             } else {
                 alert("Grazie " + fullName + "! La tua richiesta è stata salvata con successo.");
                 document.getElementById('requestForm').reset();
