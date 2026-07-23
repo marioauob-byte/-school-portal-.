@@ -2,259 +2,192 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Pannello Amministratore - Controllo Totale (Cloud)</title>
+    <title>Pannello Amministratore</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .admin-section { background: #f9f9f9; padding: 15px; margin-bottom: 25px; border-radius: 8px; border: 1px solid #ddd; }
-        .btn-delete { background-color: #d9534f; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
-        .btn-edit { background-color: #f0ad4e; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; margin-right: 5px; }
-        .btn-add { background-color: #5cb85c; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .btn-approve { background-color: #28a745; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+        .btn-approve:hover { background-color: #218838; }
+        .badge-approved { color: green; font-weight: bold; }
+        .badge-pending { color: orange; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Pannello di Controllo Amministratore (Cloud)</h1>
-        <p>Gestione completa di Studenti, Scadenze e Materie sincronizzate sul Cloud.</p>
-        <hr>
-    </header>
-
-    <!-- ==================== PARTE 1: GESTIONE STUDENTI ==================== -->
-    <section class="admin-section">
-        <h2>1. Aggiungi / Gestisci Studenti (Cloud)</h2>
-        <form id="addUserForm">
+    <!-- شاشة تسجيل دخول الأدمن -->
+    <div id="adminAuthSection">
+        <h1>Accesso Amministratore</h1>
+        <form id="adminLoginForm">
             <div>
-                <label for="newUsername">Nome Utente Studente:</label><br>
-                <input type="text" id="newUsername" placeholder="Es. mario2026" required>
+                <label for="adminUser">Username Admin:</label><br>
+                <input type="text" id="adminUser" placeholder="Es: mario admin">
             </div>
             <br>
             <div>
-                <label for="newPassword">Password:</label><br>
-                <input type="password" id="newPassword" placeholder="Password per lo studente" required>
+                <label for="adminPass">Password Admin:</label><br>
+                <input type="password" id="adminPass" placeholder="Inserisci password admin">
             </div>
             <br>
-            <div>
-                <label for="expiryDate">Data Scadenza Abbonamento:</label><br>
-                <input type="date" id="expiryDate" required>
-            </div>
-            <br>
-            <button type="button" id="addUserBtn" class="btn-add">Crea Account Studente</button>
+            <button type="button" id="adminLoginBtn">Accedi come Admin</button>
         </form>
+    </div>
 
-        <br>
-        <h3>Studenti Registrati nel Cloud</h3>
-        <table border="1" cellpadding="8" cellspacing="0" width="100%">
+    <!-- لوحة التحكم للطلبات -->
+    <div id="adminDashboardSection" style="display: none;">
+        <h1>Pannello di Controllo Amministratore</h1>
+        <button type="button" id="logoutBtn">Logout</button>
+        <hr>
+
+        <h2>Richieste di Accesso Ricevute</h2>
+        <table id="requestsTable">
             <thead>
                 <tr>
-                    <th>Nome Utente</th>
-                    <th>Password</th>
-                    <th>Data Scadenza</th>
+                    <th>Data</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Città</th>
+                    <th>Motivo</th>
                     <th>Stato</th>
                     <th>Azione</th>
                 </tr>
             </thead>
-            <tbody id="usersTableBody">
-                <!-- Popolato da JS Cloud -->
+            <tbody id="requestsBody">
+                <!-- سيتم تحميل الطلبات هنا عبر JavaScript -->
             </tbody>
         </table>
-    </section>
+    </div>
 
-    <!-- ==================== PARTE 2: GESTIONE MATERIE E VIDEO ==================== -->
-    <section class="admin-section">
-        <h2 id="formTitle">2. Aggiungi Materia e Video (Cloud)</h2>
-        <form id="courseForm">
-            <div>
-                <label for="courseKey">Codice Materia (es: python, reti):</label><br>
-                <input type="text" id="courseKey" placeholder="Es. python" required>
-            </div>
-            <br>
-            <div>
-                <label for="courseTitle">Nome della Materia:</label><br>
-                <input type="text" id="courseTitle" placeholder="Es. Programmazione Python" required>
-            </div>
-            <br>
-            <div>
-                <label for="videoUrl">Link Video MP4 / URL:</label><br>
-                <input type="text" id="videoUrl" placeholder="https://www.w3schools.com/html/mov_bbb.mp4" required>
-            </div>
-            <br>
-            <button type="button" id="saveCourseBtn" class="btn-add">Salva Materia sul Cloud</button>
-        </form>
+    <br><hr>
+    <p><a href="index.html">Torna alla Pagina Principale</a></p>
 
-        <br>
-        <h3>Materie Esistenti nel Cloud</h3>
-        <table border="1" cellpadding="8" cellspacing="0" width="100%">
-            <thead>
-                <tr>
-                    <th>Codice</th>
-                    <th>Nome Materia</th>
-                    <th>Link Video</th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody id="coursesTableBody">
-                <!-- Popolato da JS Cloud -->
-            </tbody>
-        </table>
-    </section>
-
-    <hr>
-
-    <footer>
-        <p><a href="login.html">Torna alla Login</a> | <a href="dashboard.html">Vai alla Dashboard</a></p>
-    </footer>
-
-    <!-- ☁️ 1. المكتبة الرسمية لـ Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- ☁️ 2. كود إدارة السحابة (الطلاب والمواد) -->
     <script>
         const SUPABASE_URL = 'https://uqgprffqfrwxdymfwhvn.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        /* ==================== LOGICA STUDENTI (CLOUD) ==================== */
-        const addUserBtn = document.getElementById('addUserBtn');
-        const newUsernameInput = document.getElementById('newUsername');
-        const newPasswordInput = document.getElementById('newPassword');
-        const expiryDateInput = document.getElementById('expiryDate');
-        const usersTableBody = document.getElementById('usersTableBody');
+        const adminAuthSection = document.getElementById('adminAuthSection');
+        const adminDashboardSection = document.getElementById('adminDashboardSection');
 
-        // 1. إضافة طالب جديد إلى السحابة
-        addUserBtn.addEventListener('click', async function() {
-            const username = newUsernameInput.value.trim();
-            const password = newPasswordInput.value.trim();
-            const expiry = expiryDateInput.value;
+        // تسجيل دخول الأدمن
+        document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+            const user = document.getElementById('adminUser').value.trim();
+            const pass = document.getElementById('adminPass').value.trim();
 
-            if (!username || !password || !expiry) {
-                alert("Compila tutti i campi dello studente!");
+            if (!user || !pass) {
+                alert("Inserisci username e password!");
                 return;
             }
 
-            const { error } = await _supabase
+            const { data: admin, error } = await _supabase
+                .from('admins')
+                .select('*')
+                .eq('username', user)
+                .eq('password', pass)
+                .maybeSingle();
+
+            if (error) {
+                alert("Errore: " + error.message);
+                return;
+            }
+
+            if (admin) {
+                alert("Benvenuto " + admin.username + "!");
+                sessionStorage.setItem('isAdminLoggedIn', 'true');
+                showDashboard();
+            } else {
+                alert("Credenziali Admin errate!");
+            }
+        });
+
+        // الخروج
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.removeItem('isAdminLoggedIn');
+            location.reload();
+        });
+
+        // التحقق من حالة الجلسة
+        if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+            showDashboard();
+        }
+
+        function showDashboard() {
+            adminAuthSection.style.display = 'none';
+            adminDashboardSection.style.display = 'block';
+            loadRequests();
+        }
+
+        // تحميل الطلبات من Supabase
+        async function loadRequests() {
+            const { data: requests, error } = await _supabase
+                .from('access_requests')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            const tbody = document.getElementById('requestsBody');
+            tbody.innerHTML = '';
+
+            requests.forEach(req => {
+                const date = new Date(req.created_at).toLocaleDateString('it-IT');
+                const isApproved = req.status === 'approved';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${date}</td>
+                    <td>${req.full_name || ''}</td>
+                    <td>${req.email || ''}</td>
+                    <td>${req.city || ''}</td>
+                    <td>${req.reason || ''}</td>
+                    <td>${isApproved ? '<span class="badge-approved">Approvato</span>' : '<span class="badge-pending">In Attesa</span>'}</td>
+                    <td>
+                        ${isApproved 
+                            ? '<span>Utente Creato</span>' 
+                            : `<button class="btn-approve" onclick="approveRequest(${req.id}, '${req.email}', '${req.full_name}')">Approva e Crea Account</button>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // قبول الطلب وإنشاء حساب طالب تلقائياً
+        async function approveRequest(reqId, email, fullName) {
+            const generatedUsername = email.split('@')[0];
+            const generatedPassword = Math.random().toString(36).slice(-8);
+
+            const nextYear = new Date();
+            nextYear.setFullYear(nextYear.getFullYear() + 1);
+            const expiryDate = nextYear.toISOString().split('T')[0];
+
+            const { error: studentError } = await _supabase
                 .from('students')
-                .insert([{ username: username, password: password, expiry_date: expiry }]);
+                .insert([
+                    {
+                        username: generatedUsername,
+                        password: generatedPassword,
+                        expiry_date: expiryDate
+                    }
+                ]);
 
-            if (error) {
-                alert("Errore durante il salvataggio: " + error.message);
-            } else {
-                alert("Studente salvato sul Cloud con successo!");
-                newUsernameInput.value = "";
-                newPasswordInput.value = "";
-                expiryDateInput.value = "";
-                loadStudentsCloud();
-            }
-        });
-
-        // 2. جلب وتحديث قائمة الطلاب من السحابة
-        async function loadStudentsCloud() {
-            const { data: students, error } = await _supabase.from('students').select('*');
-            
-            if (error) {
-                console.error("Errore caricamento studenti:", error);
+            if (studentError) {
+                alert("Errore creazione studente: " + studentError.message);
                 return;
             }
 
-            usersTableBody.innerHTML = "";
-            const today = new Date().toISOString().split('T')[0];
+            await _supabase
+                .from('access_requests')
+                .update({ status: 'approved' })
+                .eq('id', reqId);
 
-            students.forEach(s => {
-                const isExpired = s.expiry_date < today;
-                const statusText = isExpired ? "<span style='color:red;'>Scaduto</span>" : "<span style='color:green;'>Attivo</span>";
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${s.username}</strong></td>
-                    <td>${s.password}</td>
-                    <td>${s.expiry_date}</td>
-                    <td>${statusText}</td>
-                    <td><button class="btn-delete" onclick="deleteStudentCloud(${s.id})">Elimina</button></td>
-                `;
-                usersTableBody.appendChild(row);
-            });
+            alert(`Account creato con successo!\n\nUsername: ${generatedUsername}\nPassword: ${generatedPassword}\nScadenza: ${expiryDate}`);
+            loadRequests();
         }
-
-        // 3. حذف طالب من السحابة
-        async function deleteStudentCloud(id) {
-            if (confirm("Sei sicuro di voler eliminare questo studente dal Cloud?")) {
-                const { error } = await _supabase.from('students').delete().eq('id', id);
-                if (error) {
-                    alert("Errore eliminazione: " + error.message);
-                } else {
-                    loadStudentsCloud();
-                }
-            }
-        }
-
-
-        /* ==================== LOGICA MATERIE (CLOUD) ==================== */
-        const saveCourseBtn = document.getElementById('saveCourseBtn');
-        const courseKeyInput = document.getElementById('courseKey');
-        const courseTitleInput = document.getElementById('courseTitle');
-        const videoUrlInput = document.getElementById('videoUrl');
-        const coursesTableBody = document.getElementById('coursesTableBody');
-
-        // 1. إضافة مادة جديدة للسحابة
-        saveCourseBtn.addEventListener('click', async function() {
-            const code = courseKeyInput.value.trim().toLowerCase();
-            const title = courseTitleInput.value.trim();
-            const video_url = videoUrlInput.value.trim();
-
-            if (!code || !title || !video_url) {
-                alert("Compila tutti i campi della materia!");
-                return;
-            }
-
-            const { error } = await _supabase
-                .from('courses')
-                .upsert([{ code: code, title: title, video_url: video_url }]);
-
-            if (error) {
-                alert("Errore salvataggio materia: " + error.message);
-            } else {
-                alert("Materia salvata sul Cloud!");
-                courseKeyInput.value = "";
-                courseTitleInput.value = "";
-                videoUrlInput.value = "";
-                loadCoursesCloud();
-            }
-        });
-
-        // 2. جلب قائمة المواد من السحابة
-        async function loadCoursesCloud() {
-            const { data: courses, error } = await _supabase.from('courses').select('*');
-            if (error) return;
-
-            coursesTableBody.innerHTML = "";
-
-            if (!courses || courses.length === 0) {
-                coursesTableBody.innerHTML = "<tr><td colspan='4'>Nessuna materia presente.</td></tr>";
-                return;
-            }
-
-            courses.forEach(c => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${c.code}</strong></td>
-                    <td>${c.title}</td>
-                    <td><small>${c.video_url}</small></td>
-                    <td><button class="btn-delete" onclick="deleteCourseCloud('${c.code}')">Elimina</button></td>
-                `;
-                coursesTableBody.appendChild(row);
-            });
-        }
-
-        // 3. حذف مادة من السحابة
-        async function deleteCourseCloud(code) {
-            if (confirm("Vuoi eliminare questa materia dal Cloud?")) {
-                await _supabase.from('courses').delete().eq('code', code);
-                loadCoursesCloud();
-            }
-        }
-
-        // تشغيل التحميل الأولي للبيانات عند فتح الصفحة
-        loadStudentsCloud();
-        loadCoursesCloud();
     </script>
 </body>
 </html>
