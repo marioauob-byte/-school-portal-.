@@ -92,6 +92,7 @@
         const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Login System
         const loginBtn = document.getElementById('loginBtn');
 
         loginBtn.addEventListener('click', async function() {
@@ -118,12 +119,10 @@
             if (student) {
                 const today = new Date().toISOString().split('T')[0];
 
-                // التحقق من تاريخ الانتهاء
                 if (student.expiry_date && student.expiry_date < today) {
                     alert("Il tuo abbonamento è scaduto! Contatta l'amministratore.");
                 } else {
                     alert("Login effettuato con successo!");
-                    // حفظ بيانات الطالب في الـ LocalStorage ليتمكن dashboard.html من قراءتها
                     localStorage.setItem('loggedInUser', JSON.stringify(student));
                     window.location.href = "dashboard.html";
                 }
@@ -132,18 +131,39 @@
             }
         });
 
+        // Request Form System (حفظ الطلب مباشرة في Supabase)
         const sendReqBtn = document.getElementById('sendReqBtn');
-        sendReqBtn.addEventListener('click', function() {
+        
+        sendReqBtn.addEventListener('click', async function() {
             const fullName = document.getElementById('fullName').value.trim();
             const email = document.getElementById('reqEmail').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const reason = document.getElementById('reason').value.trim();
 
             if (!fullName || !email) {
                 alert("Per favore inserisci il tuo nome e la tua email!");
                 return;
             }
 
-            alert("Grazie " + fullName + "! La tua richiesta è stata inviata.");
-            document.getElementById('requestForm').reset();
+            // إرسال البيانات لجداول Supabase
+            const { data, error } = await _supabase
+                .from('access_requests')
+                .insert([
+                    { 
+                        full_name: fullName, 
+                        email: email, 
+                        location: location, 
+                        reason: reason 
+                    }
+                ]);
+
+            if (error) {
+                console.error("Errore invio richiesta:", error);
+                alert("Errore nell'invio della richiesta. Riprova!");
+            } else {
+                alert("Grazie " + fullName + "! La tua richiesta è stata salvata con successo.");
+                document.getElementById('requestForm').reset();
+            }
         });
     </script>
 </body>
