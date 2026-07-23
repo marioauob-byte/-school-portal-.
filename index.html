@@ -7,7 +7,6 @@
 </head>
 <body>
 
-    <!-- Titolo principale della pagina -->
     <h1>Benvenuto nel Portale Didattico Riservato</h1>
     <p>Effettua il login per accedere ai corsi e ai materiali di studio.</p>
 
@@ -36,12 +35,11 @@
 
     <hr>
 
-    <!-- Sezione Richiesta Account / Contatti -->
+    <!-- Sezione Richiesta Account -->
     <section>
         <h3>Non hai ancora un account?</h3>
         <p>Per richiedere l'accesso o per rinnovare il tuo abbonamento, contattami direttamente o compila il modulo sottostante.</p>
 
-        <!-- Contatti diretti -->
         <ul>
             <li><strong>WhatsApp:</strong> <a href="https://wa.me/393520062917" target="_blank">+39 352 006 2917</a></li>
             <li><strong>Email:</strong> <a href="mailto:mario.auob@rizzoli.it">mario.auob@rizzoli.it</a></li>
@@ -87,16 +85,13 @@
         <p><a href="admin.html">Pannello Amministratore (Admin)</a></p>
     </footer>
 
-    <!-- 1. استدعاء مكتبة Supabase السحابية -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- 2. كود الاتصال بالسحابة وتسجيل الدخول -->
     <script>
         const SUPABASE_URL = 'https://uqgprffqfrwxdymfwhvn.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 1. تسجيل الدخول ---
         const loginBtn = document.getElementById('loginBtn');
 
         loginBtn.addEventListener('click', async function() {
@@ -108,7 +103,6 @@
                 return;
             }
 
-            // ☁️ التحقق من حساب الطالب من السحابة مباشرة
             const { data: student, error } = await _supabase
                 .from('students')
                 .select('*')
@@ -124,10 +118,12 @@
             if (student) {
                 const today = new Date().toISOString().split('T')[0];
 
-                if (student.expiry_date < today) {
+                // التحقق من تاريخ الانتهاء
+                if (student.expiry_date && student.expiry_date < today) {
                     alert("Il tuo abbonamento è scaduto! Contatta l'amministratore.");
                 } else {
                     alert("Login effettuato con successo!");
+                    // حفظ بيانات الطالب في الـ LocalStorage ليتمكن dashboard.html من قراءتها
                     localStorage.setItem('loggedInUser', JSON.stringify(student));
                     window.location.href = "dashboard.html";
                 }
@@ -136,7 +132,6 @@
             }
         });
 
-        // --- 2. إرسال طلب اشتراك جديد ---
         const sendReqBtn = document.getElementById('sendReqBtn');
         sendReqBtn.addEventListener('click', function() {
             const fullName = document.getElementById('fullName').value.trim();
@@ -147,7 +142,7 @@
                 return;
             }
 
-            alert("Grazie " + fullName + "! La tua richiesta è stata inviata. Ti risponderemo a breve.");
+            alert("Grazie " + fullName + "! La tua richiesta è stata inviata.");
             document.getElementById('requestForm').reset();
         });
     </script>
