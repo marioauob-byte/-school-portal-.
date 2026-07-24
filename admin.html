@@ -2,8 +2,24 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pannello Amministratore</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- PWA Manifest & Service Worker -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('PWA Ready!', reg))
+            .catch(err => console.log('PWA Error:', err));
+        });
+      }
+    </script>
+
     <style>
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
@@ -22,8 +38,7 @@
         <form id="adminLoginForm">
             <div>
                 <label for="adminUser">Username Admin:</label><br>
-                <!-- ✅ الكود الجديد الآمن -->
-<input type="text" id="adminUser" placeholder="Inserisci username admin">
+                <input type="text" id="adminUser" placeholder="Inserisci username admin">
             </div>
             <br>
             <div>
