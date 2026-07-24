@@ -24,12 +24,12 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
         th { background-color: #f4f4f4; }
-        .btn-approve { background-color: #28a745; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+        .btn-approve { background-color: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; }
         .btn-delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
         .badge-approved { color: green; font-weight: bold; }
         .badge-pending { color: orange; font-weight: bold; }
-        .form-section { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-top: 20px; }
-        .form-group { margin-bottom: 12px; }
+        .form-section { background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-top: 20px; }
+        .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; box-sizing: border-box; }
     </style>
@@ -60,7 +60,7 @@
         <button type="button" id="logoutBtn">Logout</button>
         <hr>
 
-        <!-- قسم إضافة المواد للموديولات -->
+        <!-- قسم إضافة المواد للموديولات (رفع ملفات + روابط) -->
         <div class="form-section">
             <h2>➕ Aggiungi Materiale a un Modulo</h2>
             <form id="materialForm">
@@ -72,23 +72,39 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="matTitle">Titolo del Materiale (es. Dispensa PDF / Video Lezione):</label>
+                    <label for="matTitle">Titolo del Materiale (es. Lezione 1 / Foto Schema / Video):</label>
                     <input type="text" id="matTitle" placeholder="Inserisci titolo..." required>
                 </div>
 
                 <div class="form-group">
                     <label for="matType">Tipo di Materiale:</label>
                     <select id="matType">
-                        <option value="pdf">📄 Documento / PDF</option>
-                        <option value="video">🎥 Video (YouTube / Google Drive)</option>
-                        <option value="link">🔗 Link Esterno / Strumento</option>
-                        <option value="text">📝 Nota / Istruzione</option>
+                        <option value="pdf">📄 Documento / PDF / Word</option>
+                        <option value="image">🖼️ Immagine / Foto</option>
+                        <option value="video">🎥 Video Lezione</option>
+                        <option value="link">🔗 Link Esterno / Sito Web</option>
                     </select>
                 </div>
 
+                <!-- التبديل بين رفع ملف من الجهاز أو إدخال رابط خارجي -->
                 <div class="form-group">
-                    <label for="matUrl">URL del Materiale (Link / Google Drive / OneDrive):</label>
-                    <input type="url" id="matUrl" placeholder="https://..." required>
+                    <label>Metodo di Inserimento:</label>
+                    <select id="uploadSource" onchange="toggleInputType()">
+                        <option value="file">📁 Carica un File dal Computer / Telefono</option>
+                        <option value="url">🔗 Inserisci un Link / URL Esterno (es. YouTube / Drive)</option>
+                    </select>
+                </div>
+
+                <!-- خيار 1: رفع ملف من الكمبيوتر أو الهاتف -->
+                <div class="form-group" id="fileGroup">
+                    <label for="fileInput">Seleziona File (PDF, Foto, Video):</label>
+                    <input type="file" id="fileInput" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx">
+                </div>
+
+                <!-- خيار 2: رابط خارجي -->
+                <div class="form-group" id="urlGroup" style="display: none;">
+                    <label for="matUrl">URL del Materiale (es. Link YouTube / Drive):</label>
+                    <input type="url" id="matUrl" placeholder="https://...">
                 </div>
 
                 <div class="form-group">
@@ -96,7 +112,7 @@
                     <textarea id="matDesc" rows="2" placeholder="Breve descrizione per gli studenti..."></textarea>
                 </div>
 
-                <button type="button" id="addMaterialBtn" class="btn-approve">Aggiungi Materiale</button>
+                <button type="button" id="addMaterialBtn" class="btn-approve">📤 Carica e Salva Materiale</button>
             </form>
         </div>
 
@@ -110,7 +126,7 @@
                     <th>Modulo</th>
                     <th>Titolo</th>
                     <th>Tipo</th>
-                    <th>Link</th>
+                    <th>Link / File</th>
                     <th>Azione</th>
                 </tr>
             </thead>
@@ -152,6 +168,18 @@
 
         const adminAuthSection = document.getElementById('adminAuthSection');
         const adminDashboardSection = document.getElementById('adminDashboardSection');
+
+        // التبديل بين رفع ملف وإدخال رابط
+        function toggleInputType() {
+            const source = document.getElementById('uploadSource').value;
+            if (source === 'file') {
+                document.getElementById('fileGroup').style.display = 'block';
+                document.getElementById('urlGroup').style.display = 'none';
+            } else {
+                document.getElementById('fileGroup').style.display = 'none';
+                document.getElementById('urlGroup').style.display = 'block';
+            }
+        }
 
         // تسجيل دخول الأدمن
         document.getElementById('adminLoginBtn').addEventListener('click', async () => {
@@ -222,39 +250,90 @@
             });
         }
 
-        // 2. إضافة مادة جديدة للموديل
+        // 2. إضافة مادة جديدة (رفع ملف أو رابط)
         document.getElementById('addMaterialBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('addMaterialBtn');
             const moduleId = document.getElementById('selectModule').value;
             const title = document.getElementById('matTitle').value.trim();
             const type = document.getElementById('matType').value;
-            const url = document.getElementById('matUrl').value.trim();
             const desc = document.getElementById('matDesc').value.trim();
+            const uploadSource = document.getElementById('uploadSource').value;
 
-            if (!moduleId || !title || !url) {
-                alert("Compila i campi obbligatori (Modulo, Titolo, URL)!");
+            if (!moduleId || !title) {
+                alert("Compila il titolo e seleziona un modulo!");
                 return;
             }
 
-            const { error } = await _supabase
+            let finalUrl = '';
+
+            // إذا تم اختيار رفع ملف من الجهاز
+            if (uploadSource === 'file') {
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput.files.length === 0) {
+                    alert("Seleziona un file da caricare!");
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const filePath = `materials/${fileName}`;
+
+                btn.textContent = "⌛ Caricamento file in corso...";
+                btn.disabled = true;
+
+                // رفع الملف لـ Supabase Storage
+                const { data: uploadData, error: uploadError } = await _supabase.storage
+                    .from('materials')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    alert("Errore caricamento file: " + uploadError.message + "\nAssicurati di aver creato il Bucket 'materials' in Supabase!");
+                    btn.textContent = "📤 Carica e Salva Materiale";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // جلب الرابط المباشر للملف
+                const { data: publicUrlData } = _supabase.storage
+                    .from('materials')
+                    .getPublicUrl(filePath);
+
+                finalUrl = publicUrlData.publicUrl;
+            } else {
+                // إذا تم اختيار وضع رابط يدوي
+                finalUrl = document.getElementById('matUrl').value.trim();
+                if (!finalUrl) {
+                    alert("Inserisci l'URL!");
+                    return;
+                }
+            }
+
+            // حفظ بيانات المادة في قاعدة البيانات
+            const { error: insertError } = await _supabase
                 .from('module_materials')
                 .insert([{
                     module_id: moduleId,
                     title: title,
                     type: type,
-                    content_url: url,
+                    content_url: finalUrl,
                     description: desc
                 }]);
 
-            if (error) {
-                alert("Errore inserimento: " + error.message);
+            btn.textContent = "📤 Carica e Salva Materiale";
+            btn.disabled = false;
+
+            if (insertError) {
+                alert("Errore salvataggio database: " + insertError.message);
             } else {
-                alert("Materiale aggiunto con successo!");
+                alert("Materiale salvato con successo!");
                 document.getElementById('materialForm').reset();
+                toggleInputType();
                 loadMaterials();
             }
         });
 
-        // 3. عرض المواد المضافة وحذفها عند الحاجة
+        // 3. عرض المواد المضافة وحذفها
         async function loadMaterials() {
             const { data: materials, error } = await _supabase
                 .from('module_materials')
@@ -272,7 +351,7 @@
                     <td>${mat.modules ? mat.modules.title : 'Modulo ' + mat.module_id}</td>
                     <td><strong>${mat.title}</strong></td>
                     <td>${mat.type.toUpperCase()}</td>
-                    <td><a href="${mat.content_url}" target="_blank">Apri Link</a></td>
+                    <td><a href="${mat.content_url}" target="_blank">Apri / Visualizza</a></td>
                     <td><button class="btn-delete" onclick="deleteMaterial(${mat.id})">Elimina</button></td>
                 `;
                 tbody.appendChild(tr);
