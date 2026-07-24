@@ -10,6 +10,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Manifest & Service Worker -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('PWA Ready!', reg))
+            .catch(err => console.log('PWA Error:', err));
+        });
+      }
+    </script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
 
@@ -42,16 +55,20 @@
         <!-- Materiali e Quiz Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- Box Materiale Didattico -->
+            <!-- Box Materiale Didattico (Dinamico) -->
             <div class="bg-slate-800/50 border border-slate-700/60 p-6 rounded-xl flex flex-col justify-between">
                 <div>
-                    <div class="text-red-400 text-2xl mb-3"><i class="fa-solid fa-file-pdf"></i></div>
+                    <div class="flex items-center gap-2 text-indigo-400 text-2xl mb-3">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
                     <h3 class="text-xl font-bold text-white mb-2">Materiali di Studio</h3>
-                    <p class="text-slate-400 text-sm mb-6">Consulta le slide, la documentazione ufficiale e gli appunti di laboratorio per questo modulo.</p>
+                    <p class="text-slate-400 text-sm mb-4">Consulta le slide, i video, le immagini e la documentazione del modulo direttamente online.</p>
+                    
+                    <!-- Lista dinamica dei materiali -->
+                    <div id="materialsList" class="space-y-3 my-4">
+                        <p class="text-slate-500 text-sm italic">Caricamento materiali...</p>
+                    </div>
                 </div>
-                <button onclick="alert('Download in corso... (Funzionalità dimostrativa)')" class="bg-slate-700 hover:bg-slate-600 text-white w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-download"></i> Scarica Materiale PDF
-                </button>
             </div>
 
             <!-- Box Quiz di Verifica -->
@@ -62,8 +79,7 @@
                     <h3 class="text-xl font-bold text-white mb-2">Quiz di Verifica</h3>
                     <p class="text-slate-400 text-sm mb-6">Metti alla prova le tue conoscenze con le domande a risposta multipla dedicate a questo argomento.</p>
                 </div>
-                <!-- تم تحديث هذا الزر للانتقال المباشر لصفحة الاختبار -->
-                <button onclick="window.location.href='quiz.html?id=' + moduleId" class="bg-indigo-600 hover:bg-indigo-500 text-white w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                <button id="startQuizBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-play"></i> Avvia il Quiz
                 </button>
             </div>
@@ -73,47 +89,112 @@
     </main>
 
     <script>
-        // Supabase Configuration
+        // Configurazione Supabase
         const SUPABASE_URL = 'https://uqgprffqfrwxdymfwhvn.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYYB5RXZi_UVZcZXiC7ulQ_IQuzKWO_';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Check Login
-        const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
+        // Controllo Sessione Utente (supporta sia localStorage che sessionStorage)
+        const currentUser = JSON.parse(localStorage.getItem('loggedInUser')) || sessionStorage.getItem('studentLoggedIn');
         if (!currentUser) {
             window.location.href = "index.html";
         } else {
-            document.getElementById('welcomeUser').textContent = "Studente: " + currentUser.username;
+            const username = typeof currentUser === 'object' ? currentUser.username : currentUser;
+            document.getElementById('welcomeUser').textContent = "Studente: " + username;
         }
 
-        // Get Module ID from URL (?id=1)
+        // Recupera ID Modulo dall'URL (?id=1)
         const urlParams = new URLSearchParams(window.location.search);
-        const moduleId = urlParams.get('id');
+        const moduleId = urlParams.get('id') || 1;
 
-        async function fetchModuleDetails() {
+        // Imposta azione pulsante Quiz
+        document.getElementById('startQuizBtn').addEventListener('click', () => {
+            window.location.href = 'quiz.html?id=' + moduleId;
+        });
+
+        // Carica dettagli modulo e materiali
+        async function loadModuleDetails() {
             if (!moduleId) {
                 document.getElementById('modTitle').textContent = "Modulo non specificato";
                 return;
             }
 
-            const { data, error } = await _supabase
+            // 1. Dati Modulo
+            const { data: moduleData, error: modError } = await _supabase
                 .from('modules')
                 .select('*')
                 .eq('id', moduleId)
                 .single();
 
-            if (error || !data) {
-                console.error("Errore recupero modulo:", error);
+            if (modError || !moduleData) {
+                console.error("Errore recupero modulo:", modError);
                 document.getElementById('modTitle').textContent = "Errore nel caricamento del modulo";
                 return;
             }
 
-            document.getElementById('modBadge').textContent = "Modulo " + data.id;
-            document.getElementById('modTitle').textContent = data.title;
-            document.getElementById('modDescription').textContent = data.description || "Nessuna descrizione fornita.";
+            document.getElementById('modBadge').textContent = "Modulo " + moduleData.id;
+            document.getElementById('modTitle').textContent = moduleData.title;
+            document.getElementById('modDescription').textContent = moduleData.description || "Nessuna descrizione fornita.";
+
+            // 2. Materiali del Modulo
+            const { data: materials, error: matError } = await _supabase
+                .from('module_materials')
+                .select('*')
+                .eq('module_id', moduleId)
+                .order('created_at', { ascending: true });
+
+            const listContainer = document.getElementById('materialsList');
+            listContainer.innerHTML = '';
+
+            if (matError || !materials || materials.length === 0) {
+                listContainer.innerHTML = '<p class="text-slate-400 text-sm">Nessun materiale disponibile al momento.</p>';
+                return;
+            }
+
+            materials.forEach(mat => {
+                let iconClass = 'fa-file-pdf text-red-400';
+                let btnLabel = 'Visualizza File';
+
+                if (mat.type === 'video') {
+                    iconClass = 'fa-circle-play text-red-500';
+                    btnLabel = 'Guarda Video';
+                } else if (mat.type === 'image') {
+                    iconClass = 'fa-image text-emerald-400';
+                    btnLabel = 'Vedi Foto';
+                } else if (mat.type === 'link') {
+                    iconClass = 'fa-link text-blue-400';
+                    btnLabel = 'Apri Link';
+                }
+
+                // Genera URL di visualizzazione diretta (es. Office Viewer per .pptx / .docx)
+                let viewUrl = mat.content_url;
+                const lowerUrl = mat.content_url.toLowerCase();
+                if (lowerUrl.includes('.pptx') || lowerUrl.includes('.ppt') || lowerUrl.includes('.docx')) {
+                    viewUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(mat.content_url)}`;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'bg-slate-900/80 border border-slate-700/80 p-4 rounded-lg flex items-center justify-between gap-3';
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <i class="fa-solid ${iconClass} text-xl flex-shrink-0"></i>
+                        <div class="truncate">
+                            <h4 class="text-sm font-semibold text-white truncate">${mat.title}</h4>
+                            ${mat.description ? `<p class="text-xs text-slate-400 truncate">${mat.description}</p>` : ''}
+                        </div>
+                    </div>
+                    <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" 
+                       class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-2 rounded-md transition flex items-center gap-1 flex-shrink-0">
+                        <i class="fa-solid fa-eye"></i> ${btnLabel}
+                    </a>
+                `;
+
+                listContainer.appendChild(item);
+            });
         }
 
-        fetchModuleDetails();
+        loadModuleDetails();
     </script>
 </body>
 </html>
