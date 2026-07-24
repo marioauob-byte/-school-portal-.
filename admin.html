@@ -25,9 +25,13 @@
         th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
         th { background-color: #f4f4f4; }
         .btn-approve { background-color: #28a745; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
-        .btn-approve:hover { background-color: #218838; }
+        .btn-delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
         .badge-approved { color: green; font-weight: bold; }
         .badge-pending { color: orange; font-weight: bold; }
+        .form-section { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-top: 20px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -50,12 +54,74 @@
         </form>
     </div>
 
-    <!-- لوحة التحكم للطلبات -->
+    <!-- لوحة التحكم للطلبات والمواد -->
     <div id="adminDashboardSection" style="display: none;">
         <h1>Pannello di Controllo Amministratore</h1>
         <button type="button" id="logoutBtn">Logout</button>
         <hr>
 
+        <!-- قسم إضافة المواد للموديولات -->
+        <div class="form-section">
+            <h2>➕ Aggiungi Materiale a un Modulo</h2>
+            <form id="materialForm">
+                <div class="form-group">
+                    <label for="selectModule">Seleziona Modulo:</label>
+                    <select id="selectModule">
+                        <option value="">Caricamento moduli...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="matTitle">Titolo del Materiale (es. Dispensa PDF / Video Lezione):</label>
+                    <input type="text" id="matTitle" placeholder="Inserisci titolo..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="matType">Tipo di Materiale:</label>
+                    <select id="matType">
+                        <option value="pdf">📄 Documento / PDF</option>
+                        <option value="video">🎥 Video (YouTube / Google Drive)</option>
+                        <option value="link">🔗 Link Esterno / Strumento</option>
+                        <option value="text">📝 Nota / Istruzione</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="matUrl">URL del Materiale (Link / Google Drive / OneDrive):</label>
+                    <input type="url" id="matUrl" placeholder="https://..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="matDesc">Descrizione o Note (Opzionale):</label>
+                    <textarea id="matDesc" rows="2" placeholder="Breve descrizione per gli studenti..."></textarea>
+                </div>
+
+                <button type="button" id="addMaterialBtn" class="btn-approve">Aggiungi Materiale</button>
+            </form>
+        </div>
+
+        <hr>
+
+        <!-- قائمة المواد المضافة حالياً -->
+        <h2>📚 Materiali Presenti nei Moduli</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Modulo</th>
+                    <th>Titolo</th>
+                    <th>Tipo</th>
+                    <th>Link</th>
+                    <th>Azione</th>
+                </tr>
+            </thead>
+            <tbody id="materialsBody">
+                <!-- سيتم تحميل المواد هنا -->
+            </tbody>
+        </table>
+
+        <hr>
+
+        <!-- قسم طلبات التسجيل -->
         <h2>Richieste di Accesso Ricevute</h2>
         <table id="requestsTable">
             <thead>
@@ -132,20 +198,102 @@
         function showDashboard() {
             adminAuthSection.style.display = 'none';
             adminDashboardSection.style.display = 'block';
+            loadModulesSelect();
+            loadMaterials();
             loadRequests();
         }
 
-        // تحميل الطلبات من Supabase
+        // 1. تحميل قائمة الموديولات في قائمة الاختيار (Dropdown)
+        async function loadModulesSelect() {
+            const { data: modules, error } = await _supabase
+                .from('modules')
+                .select('*')
+                .order('id', { ascending: true });
+
+            if (error) return console.error(error);
+
+            const select = document.getElementById('selectModule');
+            select.innerHTML = '';
+            modules.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = `${m.title}`;
+                select.appendChild(opt);
+            });
+        }
+
+        // 2. إضافة مادة جديدة للموديل
+        document.getElementById('addMaterialBtn').addEventListener('click', async () => {
+            const moduleId = document.getElementById('selectModule').value;
+            const title = document.getElementById('matTitle').value.trim();
+            const type = document.getElementById('matType').value;
+            const url = document.getElementById('matUrl').value.trim();
+            const desc = document.getElementById('matDesc').value.trim();
+
+            if (!moduleId || !title || !url) {
+                alert("Compila i campi obbligatori (Modulo, Titolo, URL)!");
+                return;
+            }
+
+            const { error } = await _supabase
+                .from('module_materials')
+                .insert([{
+                    module_id: moduleId,
+                    title: title,
+                    type: type,
+                    content_url: url,
+                    description: desc
+                }]);
+
+            if (error) {
+                alert("Errore inserimento: " + error.message);
+            } else {
+                alert("Materiale aggiunto con successo!");
+                document.getElementById('materialForm').reset();
+                loadMaterials();
+            }
+        });
+
+        // 3. عرض المواد المضافة وحذفها عند الحاجة
+        async function loadMaterials() {
+            const { data: materials, error } = await _supabase
+                .from('module_materials')
+                .select('*, modules(title)')
+                .order('created_at', { ascending: false });
+
+            if (error) return console.error(error);
+
+            const tbody = document.getElementById('materialsBody');
+            tbody.innerHTML = '';
+
+            materials.forEach(mat => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${mat.modules ? mat.modules.title : 'Modulo ' + mat.module_id}</td>
+                    <td><strong>${mat.title}</strong></td>
+                    <td>${mat.type.toUpperCase()}</td>
+                    <td><a href="${mat.content_url}" target="_blank">Apri Link</a></td>
+                    <td><button class="btn-delete" onclick="deleteMaterial(${mat.id})">Elimina</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteMaterial(id) {
+            if (confirm("Sei sicuro di voler eliminare questo materiale?")) {
+                await _supabase.from('module_materials').delete().eq('id', id);
+                loadMaterials();
+            }
+        }
+
+        // 4. تحميل الطلبات من Supabase
         async function loadRequests() {
             const { data: requests, error } = await _supabase
                 .from('access_requests')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error(error);
-                return;
-            }
+            if (error) return console.error(error);
 
             const tbody = document.getElementById('requestsBody');
             tbody.innerHTML = '';
@@ -172,7 +320,6 @@
             });
         }
 
-        // قبول الطلب وإنشاء حساب طالب تلقائياً
         async function approveRequest(reqId, email, fullName) {
             const generatedUsername = email.split('@')[0];
             const generatedPassword = Math.random().toString(36).slice(-8);
@@ -183,13 +330,11 @@
 
             const { error: studentError } = await _supabase
                 .from('students')
-                .insert([
-                    {
-                        username: generatedUsername,
-                        password: generatedPassword,
-                        expiry_date: expiryDate
-                    }
-                ]);
+                .insert([{
+                    username: generatedUsername,
+                    password: generatedPassword,
+                    expiry_date: expiryDate
+                }]);
 
             if (studentError) {
                 alert("Errore creazione studente: " + studentError.message);
